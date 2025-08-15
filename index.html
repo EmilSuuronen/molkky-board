@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mölkky Scoreboard</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="app-header">
+    <h1>🎯 MölkkyBoard</h1>
+</header>
+
+<!-- Setup Screen -->
+<main id="setup" class="screen active">
+
+    <section class="card">
+        <h2>Players (max 8)</h2>
+        <div id="playersList" class="players-list"></div>
+
+        <div class="setup-actions">
+            <button id="addPlayerBtn" class="btn">Add player</button>
+            <button id="randomizeOrderBtn" class="btn ghost">Randomize order</button>
+        </div>
+
+        <div class="legend">
+            <p>Use ▲/▼ to set turn order.</p>
+        </div>
+
+        <div class="start-actions">
+            <button id="startGameBtn" class="btn primary">Start game</button>
+        </div>
+    </section>
+
+    <section class="card">
+        <ul class="list-rules">
+            <h3>Rules:</h3>
+            <li>First thrower to exact 50 points wins</li>
+            <li>Single log thrown over will give score written on it</li>
+            <li>Multiple logs thrown over will give sum of logs that fell over</li>
+            <li>Fallen logs leaning on others will not be counted in scoring</li>
+            <li>A throw resulting in score over 50 will return the players score to 25</li>
+            <li>3 X misses in a row results in player being outed from the game</li>
+        </ul>
+    </section>
+</main>
+
+<!-- Game Screen -->
+<main id="game" class="screen">
+    <section class="status-bar">
+        <div id="turnInfo" class="turn-info"></div>
+        <div id="gameInfo" class="game-info"></div>
+    </section>
+
+    <section class="scoreboard card">
+        <div class="score-scroll">
+            <table id="scoreTable" class="score-table" aria-label="Mölkky scoreboard">
+                <thead>
+                <tr id="tableHeader">
+                    <th class="col-player">Player</th>
+                </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="keypad card">
+        <div class="keypad-grid" id="keypad">
+            <!-- Buttons injected by JS-->
+        </div>
+        <div class="keypad-actions">
+            <button id="undoBtn" class="btn ghost">Undo</button>
+            <button id="endGameBtn" class="btn danger">End game</button>
+        </div>
+    </section>
+</main>
+
+<footer id="appFooter">
+ <small>© 2025 Emil Suuronen // MölkkyBoard</small>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
