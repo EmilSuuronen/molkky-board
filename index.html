@@ -3,12 +3,28 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mölkky Scoreboard</title>
+    <title>Mölkkis</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7dd3fc">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('Service Worker registered:', reg))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        });
+    }
+</script>
+
 <header class="app-header">
-    <h1>🎯 MölkkyBoard</h1>
+    <h1>🎯 Mölkkis</h1>
 </header>
 
 <!-- Setup Screen -->
