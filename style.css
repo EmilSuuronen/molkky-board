@@ -74,6 +74,82 @@ body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial
 .img-app-icon { border-radius: 12px; width: 48px; height: 48px; object-fit: cover; }
 .div-app-icon {display: flex; flex-direction: column; justify-content: center; align-items: center; }
 
+/* Mölkky instruction board */
+.molkky-board {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.molkky-title {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.molkky-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center; /* center triangle within the card */
+}
+
+/* Each row is centered; logs have equal spacing */
+.molkky-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Log styling */
+.log {
+    --log-size: 48px;            /* tweak size if needed */
+    width: var(--log-size);
+    height: var(--log-size);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: #0b0b0f;
+    background: radial-gradient(ellipse at 30% 30%, #f7e7c6 0%, #e3c89a 55%, #c9a875 100%);
+    border: 2px solid rgba(0,0,0,0.2);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.25);
+    user-select: none;
+}
+
+/* Slight size tuning per row to hint at depth (optional) */
+.molkky-row:nth-child(1) .log { --log-size: 46px; }
+.molkky-row:nth-child(2) .log { --log-size: 48px; }
+.molkky-row:nth-child(3) .log { --log-size: 50px; }
+.molkky-row:nth-child(4) .log { --log-size: 52px; }
+
+/* Subtle hover on desktop */
+@media (hover: hover) {
+    .log:hover {
+        transform: translateY(-2px);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.18), 0 6px 14px rgba(0,0,0,0.35);
+    }
+}
+
+.molkky-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+    opacity: 0.9;
+}
+
+/* Mobile-friendly tightening */
+@media (max-width: 420px) {
+    .molkky-row { gap: 8px; }
+    .molkky-row .log { --log-size: 42px; }
+    .molkky-row:nth-child(3) .log { --log-size: 44px; }
+    .molkky-row:nth-child(4) .log { --log-size: 46px; }
+}
+
+
+
+
 /* Scoreboard container */
 #scoreTable {
     display: flex;

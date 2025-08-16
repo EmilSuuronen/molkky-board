@@ -103,11 +103,10 @@ function startGame(e) {
             scores: [],
             total: 0,
             misses: 0,
-            eliminated: false
+            eliminated: false,
         });
     });
 
-    shuffleArray(players);
     currentPlayerIndex = 0;
     gameActive = true;
     winners = [];
@@ -149,9 +148,36 @@ function recalcTotals() {
                 place: nextPlace++
             });
         }
+
+        // Update winner/loser
+        const activePlayers = players.filter((p, i) =>
+            !p.eliminated && !winners.find(w => w.playerIndex === i)
+        );
+
+        if (activePlayers.length === 1 && gameActive) {
+            gameActive = false;
+            // Push the last remaining player as loser/final placer
+            const last = activePlayers[0];
+            winners.push({ playerIndex: players.indexOf(last), name: last.name, total: last.total, place: nextPlace++ });
+            showFinalResults();
+        }
     });
 
     renderScoreboard();
+}
+
+function showFinalResults() {
+    let message = "Game Over!\n\nFinal Results:\n";
+    winners
+        .sort((a, b) => a.place - b.place)
+        .forEach(w => {
+            message += `${w.place}. ${w.name} (${w.total} points)\n`;
+        });
+    alert(message);
+
+    document.getElementById("setup").style.display = "block";
+    document.getElementById("game").style.display = "none";
+    document.getElementById("appFooter").style.display = "block";
 }
 
 function renderScoreboard() {
@@ -318,27 +344,16 @@ function exitEditMode() {
 
 function endGame() {
     if (!gameActive) return;
-
     const confirmEnd = window.confirm("Are you sure you want to end the game?");
     if (!confirmEnd) return;
-
     gameActive = false;
 
-    let winner = null;
-    let maxScore = -1;
-
-    players.forEach(p => {
-        if (p.total > maxScore) {
-            maxScore = p.total;
-            winner = p;
+    // Add remaining active players into results
+    players.forEach((p, i) => {
+        if (!winners.find(w => w.playerIndex === i)) {
+            winners.push({ playerIndex: i, name: p.name, total: p.total, place: nextPlace++ });
         }
     });
-
-    if (winner) {
-        alert(`Game over! Winner: ${winner.name} with ${winner.total} points`);
-    } else {
-        alert("Game over! No winner.");
-    }
 
     document.getElementById("setup").style.display = "block";
     document.getElementById("game").style.display = "none";
