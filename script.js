@@ -24,8 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
         addPlayerRow();
     });
 
-    document.getElementById("randomizeOrderBtn").addEventListener("click", randomizeOrder);
-    document.getElementById("endGameBtn").addEventListener("click", endGame);
+    const randomizeBtn = document.getElementById("randomizeOrderBtn");
+    if (randomizeBtn) randomizeBtn.addEventListener("click", randomizeOrder);
+
+    const endBtn = document.getElementById("endGameBtn");
+    if (endBtn) endBtn.addEventListener("click", endGame);
 });
 
 function assignPlayerColor(playerIndex) {
@@ -54,13 +57,13 @@ function addPlayerRow(name = "") {
 
     row.className = "player-row";
     row.innerHTML = `
-        <input type="text" placeholder="Name" value="${name}" aria-label="Player name" maxlength="8"/>
-        <div class="order-buttons">
-            <button class="btn" data-dir="up" title="Move up">▲</button>
-            <button class="btn" data-dir="down" title="Move down">▼</button>
-        </div>
-        <button class="btn remove-btn" title="Remove">✖</button>
-    `;
+    <input type="text" placeholder="Name" value="${name}" aria-label="Player name" maxlength="8"/>
+    <div class="order-buttons">
+      <button class="btn" data-dir="up" title="Move up">▲</button>
+      <button class="btn" data-dir="down" title="Move down">▼</button>
+    </div>
+    <button class="btn remove-btn" title="Remove">✖</button>
+  `;
 
     // Move up/down
     row.querySelectorAll(".order-buttons .btn").forEach(btn => {
@@ -92,8 +95,10 @@ function renumberPlaceholders() {
 
 function startGame(e) {
     e.preventDefault();
+
     const nameInputs = document.querySelectorAll("#playersList input[type='text']");
     players = [];
+    // Respect the DOM order (manual/randomized order in setup)
     nameInputs.forEach((input, index) => {
         const name = input.value.trim() || `Player ${index + 1}`;
         const color = assignPlayerColor(index);
@@ -107,19 +112,34 @@ function startGame(e) {
         });
     });
 
+    // DO NOT shuffle here: respect chosen order
+    // shuffleArray(players); // removed
+
     currentPlayerIndex = 0;
     gameActive = true;
     winners = [];
     nextPlace = 1;
+
     renderScoreboard();
     initKeypad();
     document.getElementById("setup").style.display = "none";
     document.getElementById("game").style.display = "block";
-    document.getElementById("appFooter").style.display = "none";
+    const footer = document.getElementById("appFooter");
+    if (footer) footer.style.display = "none";
 }
 
 function getCurrentRoundIndex() {
-    return Math.max(...players.map(p => p.scores.length - 1), 0);
+    if (players.length === 0) return -1;
+    return Math.max(...players.map(p => p.scores.length - 1), -1);
+}
+
+function getActivePlayerIndexes() {
+    const active = [];
+    for (let i = 0; i < players.length; i++) {
+        const isWinner = winners.find(w => w.playerIndex === i);
+        if (!players[i].eliminated && !isWinner) active.push(i);
+    }
+    return active;
 }
 
 function recalcTotals() {
@@ -136,10 +156,11 @@ function recalcTotals() {
             } else if (typeof s === "number") {
                 missStreak = 0;
                 p.total += s;
-                if (p.total > 50) p.total = 25;
+                if (p.total > 50) p.total = 25; // official rule
             }
         }
 
+        // Flag winners reaching exactly 50
         if (p.total >= 50 && !winners.find(w => w.playerIndex === index)) {
             winners.push({
                 playerIndex: index,
@@ -148,36 +169,23 @@ function recalcTotals() {
                 place: nextPlace++
             });
         }
-
-        // Update winner/loser
-        const activePlayers = players.filter((p, i) =>
-            !p.eliminated && !winners.find(w => w.playerIndex === i)
-        );
-
-        if (activePlayers.length === 1 && gameActive) {
-            gameActive = false;
-            // Push the last remaining player as loser/final placer
-            const last = activePlayers[0];
-            winners.push({ playerIndex: players.indexOf(last), name: last.name, total: last.total, place: nextPlace++ });
-            showFinalResults();
-        }
     });
 
     renderScoreboard();
-}
 
-function showFinalResults() {
-    let message = "Game Over!\n\nFinal Results:\n";
-    winners
-        .sort((a, b) => a.place - b.place)
-        .forEach(w => {
-            message += `${w.place}. ${w.name} (${w.total} points)\n`;
+    // Auto-end if only one non-winner remains
+    const active = getActivePlayerIndexes();
+    if (active.length === 1 && gameActive) {
+        gameActive = false;
+        const last = active[0];
+        winners.push({
+            playerIndex: last,
+            name: players[last].name,
+            total: players[last].total,
+            place: nextPlace++
         });
-    alert(message);
-
-    document.getElementById("setup").style.display = "block";
-    document.getElementById("game").style.display = "none";
-    document.getElementById("appFooter").style.display = "block";
+        showFinalResults();
+    }
 }
 
 function renderScoreboard() {
@@ -186,23 +194,27 @@ function renderScoreboard() {
 
     const numRounds = Math.max(...players.map(p => p.scores.length), 0);
 
-    // Header
+    // Header row
     const headerRow = document.createElement("div");
     headerRow.className = "score-row header-row";
+
     const roundHeader = document.createElement("div");
     roundHeader.className = "round-header";
     roundHeader.textContent = "#";
     headerRow.appendChild(roundHeader);
-    players.forEach(p => {
+
+    players.forEach((p, idx) => {
         const ph = document.createElement("div");
         ph.className = "player-name-header";
-        ph.textContent = `${p.name}${p.eliminated ? " (Out)" : ""}`;
+        const w = winners.find(w => w.playerIndex === idx);
+        const suffix = p.eliminated ? " (Out)" : (w ? ` (${w.place}.)` : "");
+        ph.textContent = `${p.name}${suffix}`;
         ph.style.backgroundColor = p.color;
         headerRow.appendChild(ph);
     });
     container.appendChild(headerRow);
 
-    // Rounds
+    // Visible rounds only
     const startRound = Math.max(numRounds - MAX_VISIBLE_ROUNDS, 0);
     for (let ri = startRound; ri < numRounds; ri++) {
         const rowEl = document.createElement("div");
@@ -216,7 +228,9 @@ function renderScoreboard() {
         players.forEach((player, pi) => {
             const cell = document.createElement("div");
             cell.className = "score-cell";
-            if (pi === currentPlayerIndex && !player.eliminated) cell.classList.add("current-player");
+            if (pi === currentPlayerIndex && !player.eliminated && !winners.find(w => w.playerIndex === pi)) {
+                cell.classList.add("current-player");
+            }
             cell.textContent = player.scores[ri] ?? "-";
             cell.dataset.playerIndex = pi;
             cell.dataset.roundIndex = ri;
@@ -227,43 +241,70 @@ function renderScoreboard() {
         container.appendChild(rowEl);
     }
 
-    // Totals
+    // Totals row
     const totalRow = document.createElement("div");
     totalRow.className = "score-row total-row";
+
     const totalLabel = document.createElement("div");
     totalLabel.textContent = "Total";
     totalRow.appendChild(totalLabel);
+
     players.forEach(p => {
         const totalCell = document.createElement("div");
         totalCell.className = "total-cell";
         totalCell.textContent = p.total;
         totalRow.appendChild(totalCell);
     });
+
     container.appendChild(totalRow);
 }
 
 function nextTurn() {
     if (!gameActive) return;
 
-    let nextIndex = (currentPlayerIndex + 1) % players.length;
+    // advance to next active player (skip eliminated & winners)
     let tries = 0;
-
-    while ((players[nextIndex].eliminated || winners.find(w => w.playerIndex === nextIndex)) && tries < players.length) {
+    let nextIndex = currentPlayerIndex;
+    do {
         nextIndex = (nextIndex + 1) % players.length;
         tries++;
-    }
+        if (tries > players.length * 2) break; // failsafe
+    } while (
+        players[nextIndex].eliminated ||
+        winners.find(w => w.playerIndex === nextIndex)
+        );
 
     currentPlayerIndex = nextIndex;
 
-    // If back to first player, add new round
-    if (currentPlayerIndex === 0) {
-        players.forEach(p => p.scores.push("-"));
-    }
+    // If the just-finished round is complete for all ACTIVE players,
+    // start a NEW round and align turn to the first active player.
+    maybeStartNewRoundAndAlignTurn();
 
     renderScoreboard();
 }
 
+function maybeStartNewRoundAndAlignTurn() {
+    const active = getActivePlayerIndexes();
+    if (active.length === 0) return; // game will end elsewhere
+
+    const lastRound = getCurrentRoundIndex(); // -1 if none yet
+    if (lastRound < 0) return;
+
+    const allFilled = active.every(i => {
+        const v = players[i].scores[lastRound];
+        return v !== undefined && v !== "-";
+    });
+
+    if (allFilled) {
+        // start next round
+        players.forEach(p => p.scores.push("-"));
+        // first active player begins the new round
+        currentPlayerIndex = active[0];
+    }
+}
+
 function undoLast() {
+    // Remove last entered score
     let found = false;
     for (let ri = getCurrentRoundIndex(); ri >= 0 && !found; ri--) {
         for (let pi = players.length - 1; pi >= 0; pi--) {
@@ -278,7 +319,7 @@ function undoLast() {
     }
 
     // Remove trailing empty rounds
-    let maxRound = Math.max(...players.map(p => p.scores.length - 1));
+    let maxRound = Math.max(...players.map(p => p.scores.length - 1), -1);
     while (maxRound >= 0) {
         const isEmpty = players.every(p => p.scores[maxRound] === "-");
         if (!isEmpty) break;
@@ -309,26 +350,38 @@ function initKeypad() {
 
 function handleKeypadClick(e) {
     if (!e.target.classList.contains("key")) return;
-    const value = e.target.dataset.value;
     if (!gameActive) return;
+
+    const value = e.target.dataset.value;
 
     if (editModeCell) {
         const ri = parseInt(editModeCell.dataset.roundIndex);
         const pi = parseInt(editModeCell.dataset.playerIndex);
-        players[pi].scores[ri] = value === "X" ? "X" : parseInt(value);
+        players[pi].scores[ri] = value === "X" ? "X" : parseInt(value, 10);
         exitEditMode();
-    } else {
-        const roundIndex = getCurrentRoundIndex();
-        players.forEach(p => {
-            if (p.scores.length <= roundIndex) p.scores.push("-");
-        });
-
-        const player = players[currentPlayerIndex];
-        player.scores[roundIndex] = value === "X" ? "X" : parseInt(value);
-        nextTurn();
+        recalcTotals();
+        // editing does NOT change turn or start new round
+        return;
     }
 
-    recalcTotals();
+    // Normal scoring for current player
+    const roundIndex = getCurrentRoundIndex();
+    // Ensure the current round exists
+    if (roundIndex < 0) {
+        // first ever input -> start first round for all players
+        players.forEach(p => p.scores.push("-"));
+    }
+
+    const useRound = getCurrentRoundIndex(); // recompute after potential push
+    players.forEach(p => {
+        if (p.scores.length <= useRound) p.scores.push("-");
+    });
+
+    const player = players[currentPlayerIndex];
+    player.scores[useRound] = value === "X" ? "X" : parseInt(value, 10);
+
+    recalcTotals(); // updates winners/eliminations and re-renders
+    nextTurn();     // advances and maybe starts new round (based on active players)
 }
 
 function enterEditMode(cell) {
@@ -342,18 +395,36 @@ function exitEditMode() {
     editModeCell = null;
 }
 
+function showFinalResults() {
+    let message = "Game Over!\n\nFinal Results:\n";
+    winners
+        .sort((a, b) => a.place - b.place)
+        .forEach(w => {
+            message += `${w.place}. ${w.name} (${w.total} points)\n`;
+        });
+    alert(message);
+
+    document.getElementById("setup").style.display = "block";
+    document.getElementById("game").style.display = "none";
+    const footer = document.getElementById("appFooter");
+    if (footer) footer.style.display = "block";
+}
+
 function endGame() {
     if (!gameActive) return;
     const confirmEnd = window.confirm("Are you sure you want to end the game?");
     if (!confirmEnd) return;
+
     gameActive = false;
 
-    // Add remaining active players into results
+    // Put any remaining non-winner players into the final order after winners
     players.forEach((p, i) => {
         if (!winners.find(w => w.playerIndex === i)) {
             winners.push({ playerIndex: i, name: p.name, total: p.total, place: nextPlace++ });
         }
     });
+
+    showFinalResults();
 
     document.getElementById("setup").style.display = "block";
     document.getElementById("game").style.display = "none";
