@@ -257,6 +257,27 @@ function renderScoreboard() {
     });
 
     container.appendChild(totalRow);
+
+    // === Current Player Card ===
+    const cpCard = document.getElementById("currentPlayerCard");
+    if (gameActive && players.length > 0) {
+        const player = players[currentPlayerIndex];
+        if (player && !player.eliminated && !winners.find(w => w.playerIndex === currentPlayerIndex)) {
+            const remaining = Math.max(50 - player.total, 0);
+            cpCard.innerHTML = `
+            <h3 style="color:${player.color};">${player.name}'s Turn</h3>
+            <p><strong>${remaining}</strong> points to win</p>
+        `;
+            cpCard.style.display = "block";
+        } else {
+            cpCard.innerHTML = "";
+            cpCard.style.display = "none";
+        }
+    } else {
+        cpCard.innerHTML = "";
+        cpCard.style.display = "none";
+    }
+
 }
 
 function nextTurn() {

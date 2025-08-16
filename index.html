@@ -24,7 +24,8 @@
 </script>
 
 <header class="app-header">
-    <h1>🎯 Mölkkis</h1>
+    <img src="./icons/icon-192.png" class="img-header">
+    <h1>Mölkkis</h1>
 </header>
 
 <!-- Setup Screen -->
@@ -118,6 +119,7 @@
         <div id="gameInfo" class="game-info"></div>
     </section>
 
+    <!-- Scoreboard card -->
     <section class="scoreboard card">
         <div class="score-scroll">
             <table id="scoreTable" class="score-table" aria-label="Mölkky scoreboard">
@@ -131,6 +133,10 @@
         </div>
     </section>
 
+    <!-- Current Player Card -->
+    <div id="currentPlayerCard" class="card current-player-card"></div>
+
+    <!-- Keypad Card -->
     <section class="keypad card">
         <div class="keypad-grid" id="keypad">
             <!-- Buttons injected by JS-->
